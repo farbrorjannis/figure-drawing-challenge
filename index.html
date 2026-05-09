@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kroki Master - www.akvarellskiss.se</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F0;
+            --accent-color: #D7CCC8;
+            --active-color: #4E342E;
+            --text-color: #4E342E;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            transition: all 0.5s ease-in-out;
+        }
+
+        #ui-wrapper {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Wheel Styles */
+        #wheel-wrapper {
+            position: relative;
+            width: 90vw;
+            height: 90vw;
+            max-width: 400px;
+            max-height: 400px;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s;
+        }
+
+        #wheel-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid var(--accent-color);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            cursor: grab;
+        }
+
+        #wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid var(--active-color);
+            z-index: 10;
+        }
+
+        /* Controls */
+        .controls {
+            width: 100%;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--active-color);
+        }
+
+        .tag-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--accent-color);
+            background: white;
+            color: var(--active-color);
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        /* Challenge View */
+        #challenge-view {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--bg-color);
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #target-image {
+            max-width: 95%;
+            max-height: 70vh;
+            border: 5px solid white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: opacity 5s ease-out;
+        }
+
+        #timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-top: 20px;
+            color: var(--active-color);
+        }
+
+        #status-label {
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .branding {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .hidden { opacity: 0; pointer-events: none; }
+        .shrink { transform: scale(0.3); opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+<div id="ui-wrapper">
+    <h2 id="main-title">KROKI MASTER</h2>
+    
+    <div id="wheel-wrapper">
+        <div id="wheel-pointer"></div>
+        <canvas id="wheel-canvas" width="800" height="800"></canvas>
+    </div>
+
+    <div class="controls" id="settings">
+        <label>Search Tags (comma separated):</label>
+        <input type="text" id="tags" class="tag-input" value="akvarellkroki, figure drawing, life drawing">
+        
+        <label>Preparation Time: <span id="prep-val">20</span>s</label>
+        <input type="range" id="prep-slider" min="10" max="30" value="20">
+        
+        <p style="font-size: 0.8rem;">Flick the wheel to spin!</p>
+    </div>
+
+    <a href="https://akvarellskiss.se" class="branding">www.akvarellskiss.se</a>
+</div>
+
+<div id="challenge-view">
+    <div id="status-label">Get Ready!</div>
+    <div id="timer-display">00:00</div>
+    <img id="target-image" src="" alt="drawing-ref">
+    <div id="social-share" style="margin-top:20px;">
+        <!-- Placeholder for social icons -->
+        <span style="font-size: 0.8rem;">Share your sketch! #akvarellskiss</span>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('wheel-canvas');
+    const ctx = canvas.getContext('2d');
+    const tagsInput = document.getElementById('tags');
+    const prepSlider = document.getElementById('prep-slider');
+    const prepVal = document.getElementById('prep-val');
+    const wheelWrapper = document.getElementById('wheel-wrapper');
+    const challengeView = document.getElementById('challenge-view');
+    const targetImage = document.getElementById('target-image');
+    const timerDisplay = document.getElementById('timer-display');
+    const statusLabel = document.getElementById('status-label');
+
+    const sectors = [1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10,1,2,3,4,5].map(v => v + " min");
+    const numSectors = sectors.length;
+    const arc = 2 * Math.PI / numSectors;
+    
+    let ang = 0; 
+    let angVel = 0; 
+    let isSpinning = false;
+    let wakeLock = null;
+
+    // Audio setup (Synthesized click)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTick(velocity) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150 + (velocity * 20), audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    // Drawing the wheel
+    function drawSector(i, label) {
+        const angle = arc * i;
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = i % 2 === 0 ? "#D7CCC8" : "#F5F5F0";
+        ctx.moveTo(400, 400);
+        ctx.arc(400, 400, 380, angle, angle + arc);
+        ctx.lineTo(400, 400);
+        ctx.fill();
+        ctx.strokeStyle = "#4E342E";
+        ctx.stroke();
+        
+        ctx.translate(400, 400);
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#4E342E";
+        ctx.font = "bold 30px sans-serif";
+        ctx.fillText(label, 350, 10);
+        ctx.restore();
+    }
+
+    function render() {
+        ctx.clearRect(0,0,800,800);
+        sectors.forEach((label, i) => drawSector(i, label));
+    }
+
+    // Physics
+    function rotate() {
+        if (angVel > 0) {
+            const prevSector = Math.floor((numSectors - (ang / (2 * Math.PI)) % 1) % numSectors);
+            angVel *= 0.985; // Friction
+            if (angVel < 0.002) {
+                angVel = 0;
+                finishSpin();
+            }
+            ang += angVel;
+            canvas.style.transform = `rotate(${ang}rad)`;
+            
+            const currentSector = Math.floor((numSectors - (ang / (2 * Math.PI)) % 1) % numSectors);
+            if (currentSector !== prevSector) playTick(angVel * 100);
+        }
+        requestAnimationFrame(rotate);
+    }
+
+    // Wake Lock to keep screen on
+    async function requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+            }
+        } catch (err) {}
+    }
+
+    function finishSpin() {
+        isSpinning = false;
+        const index = Math.floor((numSectors - (ang / (2 * Math.PI)) % 1) % numSectors);
+        const selectedTime = parseInt(sectors[index]);
+        startChallenge(selectedTime);
+    }
+
+    async function startChallenge(minutes) {
+        const tags = tagsInput.value.split(',').map(t => t.trim().toLowerCase());
+        const imgs = Array.from(parent.document.querySelectorAll('img')).filter(img => 
+            tags.some(tag => img.alt.toLowerCase().includes(tag))
+        );
+
+        if (imgs.length === 0) {
+            alert("No images found with those tags on the page!");
+            return;
+        }
+
+        const randomImg = imgs[Math.floor(Math.random() * imgs.length)];
+        targetImage.src = randomImg.src;
+        targetImage.style.opacity = 1;
+
+        await requestWakeLock();
+        
+        wheelWrapper.classList.add('shrink');
+        setTimeout(() => {
+            challengeView.style.display = 'flex';
+            runTimer(parseInt(prepSlider.value), minutes);
+        }, 800);
+    }
+
+    function runTimer(prepSeconds, workMinutes) {
+        let isPrep = true;
+        let timeLeft = prepSeconds;
+        statusLabel.innerText = "Get Ready!";
+
+        const interval = setInterval(() => {
+            let m = Math.floor(timeLeft / 60);
+            let s = timeLeft % 60;
+            timerDisplay.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+            if (timeLeft <= 0) {
+                if (isPrep) {
+                    isPrep = false;
+                    timeLeft = workMinutes * 60;
+                    statusLabel.innerText = "Drawing Time!";
+                    playTick(50); // Start signal
+                } else {
+                    clearInterval(interval);
+                    endChallenge();
+                }
+            }
+            timeLeft--;
+        }, 1000);
+    }
+
+    function endChallenge() {
+        statusLabel.innerText = "Time's Up!";
+        targetImage.style.opacity = 0; // 5s fade via CSS
+        if (wakeLock) wakeLock.release();
+        
+        setTimeout(() => {
+            challengeView.style.display = 'none';
+            wheelWrapper.classList.remove('shrink');
+        }, 5500);
+    }
+
+    // Input Handlers
+    let isDragging = false;
+    let lastAngle = 0;
+
+    canvas.addEventListener('mousedown', () => { isDragging = true; angVel = 0; });
+    window.addEventListener('mouseup', (e) => {
+        if (isDragging) {
+            isDragging = false;
+            angVel = Math.min(0.5, Math.max(0.1, Math.random() * 0.4)); // Simulated flick
+        }
+    });
+
+    prepSlider.oninput = () => prepVal.innerText = prepSlider.value;
+
+    render();
+    rotate();
+
+</script>
+</body>
+</html>
