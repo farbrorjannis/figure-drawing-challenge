@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Figure Drawing Challenge – akvarellskiss.se</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:        #F5F5F0;
+    --beige:     #D7CCC8;
+    --brown:     #4E342E;
+    --brown-mid: #795548;
+    --brown-lt:  #A1887F;
+    --cream:     #EFEBE9;
+    --ink:       #3E2723;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--brown);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    height: 100svh;
+    max-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Paper texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.6;
+  }
+
+  /* ─── SCREENS ─── */
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; transform: scale(0.97); }
+
+  /* ─── INTRO SCREEN ─── */
+  #intro {
+    gap: 28px;
+    text-align: center;
+    background: var(--bg);
+  }
+
+  .logo-block { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+  .logo-line {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    justify-content: center;
+  }
+  .logo-line::before, .logo-line::after {
+    content: '';
+    flex: 1;
+    max-width: 60px;
+    height: 1px;
+    background: var(--brown-lt);
+  }
+
+  h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.4rem, 6vw, 2rem);
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    line-height: 1.15;
+  }
+
+  .subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--brown-lt);
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+  }
+
+  .subtitle a { color: var(--brown-lt); text-decoration: none; }
+  .subtitle a:hover { color: var(--brown); }
+
+  .ornament {
+    font-size: 1.5rem;
+    color: var(--beige);
+    line-height: 1;
+  }
+
+  .tagline {
+    font-size: clamp(1rem, 3.5vw, 1.2rem);
+    font-style: italic;
+    color: var(--brown-mid);
+    line-height: 1.7;
+    max-width: 320px;
+    font-weight: 300;
+  }
+
+  /* Mode selector */
+  .mode-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--brown-lt);
+    margin-bottom: 10px;
+  }
+
+  .mode-btns {
+    display: flex;
+    gap: 10px;
+    background: var(--cream);
+    border: 1px solid var(--beige);
+    border-radius: 4px;
+    padding: 4px;
+  }
+
+  .mode-btn {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: none;
+    background: transparent;
+    color: var(--brown-lt);
+    padding: 10px 18px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 700;
+  }
+  .mode-btn.active {
+    background: var(--brown);
+    color: var(--bg);
+    box-shadow: 0 2px 8px rgba(78,52,46,0.25);
+  }
+
+  /* Prep time slider */
+  .prep-block { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 280px; }
+  .prep-block .mode-label { margin-bottom: 0; }
+
+  .slider-row { display: flex; align-items: center; gap: 12px; width: 100%; }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    flex: 1;
+    height: 2px;
+    background: var(--beige);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--brown);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 6px rgba(78,52,46,0.3);
+  }
+  .prep-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--brown);
+    min-width: 48px;
+    text-align: right;
+  }
+
+  /* Start button */
+  .btn-primary {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    background: var(--brown);
+    color: var(--bg);
+    border: none;
+    padding: 16px 40px;
+    border-radius: 2px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(78,52,46,0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:active::after { opacity: 0.1; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(78,52,46,0.28); }
+
+  /* ─── WHEEL SCREEN ─── */
+  #wheel-screen {
+    background: var(--bg);
+    gap: 20px;
+    justify-content: center;
+  }
+
+  .wheel-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .wheel-mode-tag {
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--brown-lt);
+    font-style: italic;
+  }
+  .wheel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  /* Wheel container */
+  .wheel-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Pointer (top) */
+  .wheel-pointer {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-top: 22px solid var(--brown);
+    z-index: 10;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+
+  #wheel-canvas {
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 6px var(--cream),
+      0 0 0 8px var(--beige),
+      0 12px 40px rgba(78,52,46,0.25);
+    display: block;
+    transition: transform 0.8s cubic-bezier(0.2, 0, 0.1, 1);
+  }
+
+  /* Hub */
+  .wheel-hub {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    background: radial-gradient(circle at 40% 35%, var(--cream), var(--brown-mid));
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.3);
+    z-index: 5;
+  }
+
+  /* Spin button */
+  .spin-btn {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    background: var(--brown);
+    color: var(--bg);
+    border: none;
+    padding: 15px 50px;
+    border-radius: 2px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(78,52,46,0.2);
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+  .spin-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(78,52,46,0.3); }
+  .spin-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .wheel-hint {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--beige);
+    font-style: italic;
+    flex-shrink: 0;
+  }
+
+  /* ─── DRAWING SCREEN ─── */
+  #drawing-screen {
+    background: #1a0f0c;
+    padding: 0;
+    justify-content: flex-start;
+  }
+
+  #pose-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center center;
+    transition: opacity 5s ease;
+    background: #1a0f0c;
+  }
+
+  .drawing-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.55) 0%,
+      rgba(0,0,0,0) 30%,
+      rgba(0,0,0,0) 65%,
+      rgba(0,0,0,0.7) 100%
+    );
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .drawing-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 16px 20px 12px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .drawing-mode-tag {
+    font-size: 0.55rem;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    font-style: italic;
+  }
+
+  .drawing-title-sm {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.8);
+    font-weight: 700;
+  }
+
+  /* Timer display */
+  .timer-block {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 24px 32px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .timer-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    font-style: italic;
+  }
+
+  .timer-display {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3.5rem, 18vw, 6rem);
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    letter-spacing: 0.05em;
+    tabular-nums: true;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timer-display.prep-mode { color: var(--beige); font-size: clamp(2.5rem, 14vw, 5rem); }
+  .timer-display.urgent { color: #FF8A65; animation: pulse 1s ease-in-out infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* Progress bar */
+  .progress-bar-wrap {
+    width: 100%;
+    max-width: 260px;
+    height: 2px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--beige);
+    border-radius: 2px;
+    transition: width 1s linear;
+    width: 100%;
+  }
+
+  /* ─── RESULT OVERLAY (time result after spin) ─── */
+  #result-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(245,245,240,0.92);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 50;
+    transition: opacity 0.5s ease;
+    text-align: center;
+    padding: 24px;
+  }
+  #result-overlay.hidden { opacity: 0; pointer-events: none; }
+
+  .result-time {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(4rem, 22vw, 8rem);
+    font-weight: 900;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .result-min {
+    font-size: clamp(1rem, 5vw, 1.6rem);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--brown-lt);
+    font-style: italic;
+    margin-top: -8px;
+  }
+  .result-sep { width: 40px; height: 1px; background: var(--beige); }
+  .result-sub {
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--brown-lt);
+  }
+
+  /* ─── ALARM FLASH ─── */
+  #alarm-flash {
+    position: fixed;
+    inset: 0;
+    background: var(--brown);
+    opacity: 0;
+    z-index: 100;
+    pointer-events: none;
+    transition: opacity 0.15s;
+  }
+
+  /* ─── BACK BTN ─── */
+  .back-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.8);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border-radius: 2px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+  }
+
+  /* ─── LOADING indicator ─── */
+  .loading-ring {
+    width: 32px; height: 32px;
+    border: 2px solid var(--beige);
+    border-top-color: var(--brown);
+    border-radius: 50%;
+    animation: spin-ring 0.8s linear infinite;
+    display: none;
+  }
+  @keyframes spin-ring { to { transform: rotate(360deg); } }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.7s ease forwards; }
+
+  @keyframes wheelZoomOut {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.05); opacity: 0; }
+  }
+  .wheel-zoom-out { animation: wheelZoomOut 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+  @keyframes imageReveal {
+    from { opacity: 0; transform: scale(1.04); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .image-reveal { animation: imageReveal 0.8s ease forwards; }
+
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════ INTRO SCREEN -->
+<div id="intro" class="screen">
+  <div class="logo-block fade-up">
+    <div class="ornament">✦</div>
+    <div class="logo-line">
+      <h1>Figure Drawing<br>Challenge</h1>
+    </div>
+    <div class="subtitle">by <a href="https://www.akvarellskiss.se" target="_blank">www.akvarellskiss.se</a></div>
+  </div>
+
+  <p class="tagline fade-up" style="animation-delay:0.15s">
+    Do you take the challenge?<br>
+    Spin the wheel to get a random pose and time.<br>
+    <em>Prepare your sketchbook!</em>
+  </p>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px" class="fade-up" style="animation-delay:0.25s">
+    <div class="mode-label">Choose your category</div>
+    <div class="mode-btns">
+      <button class="mode-btn active" data-mode="models" onclick="setMode('models')">AI Models</button>
+      <button class="mode-btn" data-mode="oldmasters" onclick="setMode('oldmasters')">Old Masters</button>
+    </div>
+  </div>
+
+  <div class="prep-block fade-up" style="animation-delay:0.35s">
+    <div class="mode-label">Preparation time</div>
+    <div class="slider-row">
+      <input type="range" id="prep-slider" min="10" max="30" step="5" value="15" oninput="updatePrep(this.value)">
+      <span class="prep-val" id="prep-val">15 sec</span>
+    </div>
+  </div>
+
+  <button class="btn-primary fade-up" style="animation-delay:0.45s" onclick="startChallenge()">
+    ✦ &nbsp; Take the Challenge &nbsp; ✦
+  </button>
+</div>
+
+<!-- ════════════════════════════════════ WHEEL SCREEN -->
+<div id="wheel-screen" class="screen hidden">
+  <div class="wheel-header">
+    <div class="wheel-mode-tag" id="wheel-mode-tag">AI Models</div>
+    <div class="wheel-title">Spin for your time</div>
+  </div>
+
+  <div class="wheel-wrap" id="wheel-wrap">
+    <div class="wheel-pointer"></div>
+    <canvas id="wheel-canvas" width="320" height="320"></canvas>
+    <div class="wheel-hub"></div>
+  </div>
+
+  <button class="spin-btn" id="spin-btn" onclick="spinWheel()">Spin the Wheel</button>
+  <div class="wheel-hint">hold tight — 10 seconds of fate</div>
+
+  <button class="back-btn" style="position:relative;top:auto;right:auto;background:transparent;border:1px solid var(--beige);color:var(--brown-lt);font-size:0.6rem" onclick="goIntro()">← Back</button>
+</div>
+
+<!-- ════════════════════════════════════ RESULT OVERLAY -->
+<div id="result-overlay" class="hidden">
+  <div class="result-time" id="result-time">—</div>
+  <div class="result-min">Minutes to draw</div>
+  <div class="result-sep"></div>
+  <div class="result-sub">Get ready…</div>
+  <div class="loading-ring" id="loading-ring"></div>
+</div>
+
+<!-- ════════════════════════════════════ DRAWING SCREEN -->
+<div id="drawing-screen" class="screen hidden">
+  <img id="pose-img" src="" alt="Pose">
+  <div class="drawing-overlay"></div>
+
+  <div class="drawing-top">
+    <div class="drawing-mode-tag" id="drawing-mode-tag">AI Models</div>
+    <div class="drawing-title-sm">Figure Drawing Challenge</div>
+  </div>
+
+  <div class="timer-block">
+    <div class="timer-label" id="timer-label">Get Ready</div>
+    <div class="timer-display" id="timer-display">15</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-bar"></div>
+    </div>
+  </div>
+
+  <button class="back-btn" onclick="endSession()">✕ End</button>
+</div>
+
+<!-- ════════════════════════════════════ ALARM FLASH -->
+<div id="alarm-flash"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// IMAGE REGISTRY
+// Add URLs here. Files with "modelschallenge" = AI Models
+//                            "oldmasterschallenge" = Old Masters
+// ═══════════════════════════════════════════════════════
+const IMAGE_REGISTRY = [
+  // ── AI MODELS ─────────────────────────────────────────
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge1.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge2.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge3.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge4.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge5.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge6.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge7.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge8.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge9.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge10.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge11.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge12.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge13.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge14.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge15.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge16.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge17.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge18.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge19.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge20.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge21.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge22.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge23.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge24.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge25.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge26.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge27.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge28.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge29.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge30.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/modelschallenge31.webp",
+
+  // ── OLD MASTERS ───────────────────────────────────────
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge1.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge2.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge3.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge4.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge5.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge6.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge7.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge8.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge9.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge10.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge11.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge12.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge13.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge14.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge15.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge16.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge17.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge18.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge19.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge20.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge21.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge22.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge23.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge24.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge25.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge26.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge27.webp",
+  "https://www.akvarellskiss.se/wp-content/uploads/2026/05/oldmasterschallenge28.webp",
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let currentMode   = 'models';   // 'models' | 'oldmasters'
+let prepSeconds   = 15;
+let chosenMinutes = 1;
+let wakeLock      = null;
+let timerInterval = null;
+let audioCtx      = null;
+
+// ═══════════════════════════════════════════════════════
+// WHEEL CONFIG
+// ═══════════════════════════════════════════════════════
+const SEGMENTS = [
+  { label: '1 min',  minutes: 1,  color: '#795548' },
+  { label: '2 min',  minutes: 2,  color: '#6D4C41' },
+  { label: '3 min',  minutes: 3,  color: '#5D4037' },
+  { label: '5 min',  minutes: 5,  color: '#4E342E' },
+  { label: '10 min', minutes: 10, color: '#3E2723' },
+  { label: '1 min',  minutes: 1,  color: '#8D6E63' },
+  { label: '2 min',  minutes: 2,  color: '#795548' },
+  { label: '3 min',  minutes: 3,  color: '#6D4C41' },
+];
+
+const NUM_SEGS  = SEGMENTS.length;
+const SEG_ANGLE = (2 * Math.PI) / NUM_SEGS;
+let   wheelAngle = 0; // current rotation in radians
+
+// ── Draw wheel ────────────────────────────────────────
+function drawWheel() {
+  const canvas = document.getElementById('wheel-canvas');
+  const ctx    = canvas.getContext('2d');
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const r  = cx - 4;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < NUM_SEGS; i++) {
+    const startAngle = wheelAngle + i * SEG_ANGLE - Math.PI / 2;
+    const endAngle   = startAngle + SEG_ANGLE;
+    const seg        = SEGMENTS[i];
+
+    // Segment fill
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = seg.color;
+    ctx.fill();
+
+    // Subtle radial lines
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(245,245,240,0.12)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Label
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(startAngle + SEG_ANGLE / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(245,245,240,0.9)';
+    ctx.font = `bold ${canvas.width < 280 ? 11 : 13}px 'Playfair Display', Georgia, serif`;
+    ctx.fillText(seg.label, r - 14, 5);
+    ctx.restore();
+  }
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.strokeStyle = 'rgba(78,52,46,0.3)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// ═══════════════════════════════════════════════════════
+// SIZE WHEEL TO SCREEN
+// ═══════════════════════════════════════════════════════
+function sizeWheel() {
+  const canvas = document.getElementById('wheel-canvas');
+  const size   = Math.min(window.innerWidth * 0.82, window.innerHeight * 0.52, 360);
+  canvas.width  = size;
+  canvas.height = size;
+  drawWheel();
+}
+
+// ═══════════════════════════════════════════════════════
+// AUDIO  (Web Audio API — no files needed)
+// ═══════════════════════════════════════════════════════
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playClick(volume = 0.4) {
+  if (!audioCtx) return;
+  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.015, audioCtx.sampleRate);
+  const d   = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const src  = audioCtx.createBufferSource();
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+  src.buffer = buf;
+  src.connect(gain);
+  gain.connect(audioCtx.destination);
+  src.start();
+}
+
+function playAlarm() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  [0, 0.35, 0.7].forEach(offset => {
+    const osc  = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = 880;
+    osc.type = 'triangle';
+    gain.gain.setValueAtTime(0.0, now + offset);
+    gain.gain.linearRampToValueAtTime(0.6, now + offset + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.35);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now + offset); osc.stop(now + offset + 0.36);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════
+function showScreen(id) {
+  ['intro','wheel-screen','drawing-screen'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+}
+
+function updatePrep(val) {
+  prepSeconds = parseInt(val);
+  document.getElementById('prep-val').textContent = val + ' sec';
+}
+
+function goIntro() {
+  clearInterval(timerInterval);
+  releaseWakeLock();
+  showScreen('intro');
+}
+
+// ═══════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════
+function startChallenge() {
+  initAudio();
+  document.getElementById('wheel-mode-tag').textContent =
+    currentMode === 'models' ? 'AI Models' : 'Old Masters';
+  document.getElementById('drawing-mode-tag').textContent =
+    currentMode === 'models' ? 'AI Models' : 'Old Masters';
+  sizeWheel();
+  showScreen('wheel-screen');
+}
+
+// ═══════════════════════════════════════════════════════
+// SPIN
+// ═══════════════════════════════════════════════════════
+function spinWheel() {
+  const btn = document.getElementById('spin-btn');
+  btn.disabled = true;
+
+  // Decide result segment randomly
+  const resultIdx    = Math.floor(Math.random() * NUM_SEGS);
+  const resultSeg    = SEGMENTS[resultIdx];
+  chosenMinutes      = resultSeg.minutes;
+
+  // Angle so that resultIdx lands at top (pointer at -π/2)
+  // Pointer is at top = -π/2 offset; segment centre = resultIdx * SEG_ANGLE + SEG_ANGLE/2
+  const targetSegCentre = resultIdx * SEG_ANGLE + SEG_ANGLE / 2;
+  // We want wheelAngle such that: wheelAngle + targetSegCentre = 0 (mod 2π) → top
+  // Add multiple full rotations for drama (10 spins)
+  const spins       = 10 * 2 * Math.PI;
+  const targetAngle = spins - targetSegCentre;
+
+  // Clamp to 10 seconds exactly with easeOut
+  const duration  = 10000; // ms
+  const startTime = performance.now();
+  const startAngle = wheelAngle;
+
+  // Click schedule: starts fast, slows down
+  let lastClickAngle = startAngle;
+  const clickEvery   = SEG_ANGLE; // one click per segment edge
+
+  function easeOut(t) {
+    return 1 - Math.pow(1 - t, 4);
+  }
+
+  function frame(now) {
+    const elapsed = now - startTime;
+    const t       = Math.min(elapsed / duration, 1);
+    const easedT  = easeOut(t);
+
+    wheelAngle = startAngle + targetAngle * easedT;
+    drawWheel();
+
+    // Click sound — trigger when crossing a segment boundary
+    const angleDelta = wheelAngle - lastClickAngle;
+    if (angleDelta >= clickEvery) {
+      const speed = 1 - easedT; // 1=fast, 0=stopped
+      playClick(0.15 + speed * 0.35);
+      lastClickAngle += clickEvery;
+    }
+
+    if (t < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      wheelAngle = startAngle + targetAngle;
+      drawWheel();
+      onSpinDone(resultSeg);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+function onSpinDone(seg) {
+  // Show result overlay
+  const overlay = document.getElementById('result-overlay');
+  document.getElementById('result-time').textContent = seg.minutes;
+  overlay.classList.remove('hidden');
+  document.getElementById('loading-ring').style.display = 'block';
+
+  // Build shuffled pool for this mode
+  const pool = IMAGE_REGISTRY
+    .filter(url => currentMode === 'models'
+      ? url.includes('modelschallenge')
+      : url.includes('oldmasterschallenge'))
+    .sort(() => Math.random() - 0.5); // shuffle
+
+  let poolIndex = 0;
+
+  function tryLoad() {
+    if (poolIndex >= pool.length) {
+      // All URLs failed — give up gracefully
+      document.getElementById('loading-ring').style.display = 'none';
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        launchDrawingSession('', seg.minutes); // blank image
+      }, 2000);
+      return;
+    }
+
+    const imgUrl = pool[poolIndex];
+    poolIndex++;
+
+    const img = new Image();
+
+    img.onload = () => {
+      document.getElementById('loading-ring').style.display = 'none';
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        launchDrawingSession(imgUrl, seg.minutes);
+      }, 2000);
+    };
+
+    img.onerror = () => {
+      // This URL is broken — silently try the next one
+      tryLoad();
+    };
+
+    img.src = imgUrl;
+  }
+
+  tryLoad();
+}
+
+// ═══════════════════════════════════════════════════════
+// DRAWING SESSION
+// ═══════════════════════════════════════════════════════
+async function launchDrawingSession(imgUrl, minutes) {
+  // Set image
+  const poseImg = document.getElementById('pose-img');
+  poseImg.style.opacity = '0';
+  poseImg.src = imgUrl;
+
+  showScreen('drawing-screen');
+
+  // Animate image in
+  setTimeout(() => {
+    poseImg.classList.add('image-reveal');
+    poseImg.style.opacity = '1';
+  }, 50);
+
+  // Wake Lock
+  await requestWakeLock();
+
+  // Prep timer
+  runTimer(prepSeconds, prepSeconds, 'Get Ready', 'prep-mode', () => {
+    // Drawing timer
+    runTimer(minutes * 60, minutes * 60, 'Draw!', '', () => {
+      onTimerDone();
+    });
+  });
+}
+
+function runTimer(totalSecs, startSecs, label, cssClass, onDone) {
+  clearInterval(timerInterval);
+  let remaining = totalSecs;
+
+  const display  = document.getElementById('timer-display');
+  const lbl      = document.getElementById('timer-label');
+  const bar      = document.getElementById('progress-bar');
+
+  display.className = 'timer-display ' + (cssClass || '');
+  lbl.textContent   = label;
+
+  function tick() {
+    // Format
+    if (startSecs >= 60) {
+      const m = Math.floor(remaining / 60);
+      const s = remaining % 60;
+      display.textContent = m + ':' + String(s).padStart(2,'0');
+    } else {
+      display.textContent = remaining;
+    }
+
+    // Progress bar
+    bar.style.width = (remaining / startSecs * 100) + '%';
+
+    // Urgent last 10 sec
+    if (remaining <= 10 && !cssClass) {
+      display.classList.add('urgent');
+    }
+
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      onDone();
+      return;
+    }
+
+    if (remaining > 0 && !cssClass) playClick(0.08); // subtle heartbeat
+    remaining--;
+  }
+
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
+
+function onTimerDone() {
+  clearInterval(timerInterval);
+  playAlarm();
+
+  // Flash
+  const flash = document.getElementById('alarm-flash');
+  flash.style.opacity = '0.5';
+  setTimeout(() => { flash.style.opacity = '0'; }, 300);
+  setTimeout(() => { flash.style.opacity = '0.3'; }, 600);
+  setTimeout(() => { flash.style.opacity = '0'; }, 900);
+
+  // Fade image out over 5 sec
+  document.getElementById('pose-img').style.opacity = '0';
+
+  setTimeout(() => {
+    endSession();
+  }, 5000);
+}
+
+function endSession() {
+  clearInterval(timerInterval);
+  releaseWakeLock();
+
+  // Reset wheel
+  wheelAngle = 0;
+  document.getElementById('spin-btn').disabled = false;
+  document.getElementById('result-overlay').classList.add('hidden');
+  document.getElementById('pose-img').style.opacity = '1';
+  document.getElementById('pose-img').classList.remove('image-reveal');
+  document.getElementById('timer-display').classList.remove('urgent');
+  sizeWheel();
+  showScreen('wheel-screen');
+}
+
+// ═══════════════════════════════════════════════════════
+// WAKE LOCK
+// ═══════════════════════════════════════════════════════
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch (e) { /* not supported or denied */ }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+}
+
+// Re-acquire on visibility change
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') {
+    await requestWakeLock();
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  if (!document.getElementById('wheel-screen').classList.contains('hidden')) {
+    sizeWheel();
+  }
+});
+
+// Init prep slider display
+updatePrep(15);
+</script>
+</body>
+</html>
